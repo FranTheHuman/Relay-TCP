@@ -19,7 +19,7 @@ object EchoServer extends IOApp {
             Hostname.fromString(head).getOrElse(host"localhost"),
             next.headOption.flatMap(p => Port.fromInt(p.toInt)).getOrElse(port"8080")
           )
-        ).as(ExitCode.Success)
+        ).map(_ => IO.never).as(ExitCode.Success)
       case _ => IO pure System.err.println(s"EchoServer needs 2 params (Host & Port)") as ExitCode.Error
     }
 

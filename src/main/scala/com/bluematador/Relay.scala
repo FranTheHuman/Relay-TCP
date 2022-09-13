@@ -23,10 +23,17 @@ object Relay extends Relay {
         s1 => {
           println(s"Connected to External Client on ${s1.remoteAddress}")
 
-          Network[F]
-            .server(port = Some(port"8081"))
-            .map { s2 =>
-              println(s"Established relay address: localhost:8081")
+          s1
+            .reads
+            .through(text.utf8.decode)
+            .map(response => {
+              println(s"Response: $response")
+              Console[F].println(s"Response: $response")
+              response
+            }).parZip(Network[F]
+             .server(port = Some(port"8081"))
+             .map { s2 =>
+               println(s"Established relay address: localhost:8081")
 
               s2
                 .reads
@@ -38,20 +45,9 @@ object Relay extends Relay {
                 .through(text.utf8.encode)
                 .through(s1.writes)
 
-              s1
-                .reads
-                .through(text.utf8.decode)
-                .map(response => {
-                  println(s"Response: $response")
-                  Console[F].println(s"Response: $response")
-                  response
-                })
-                .through(text.utf8.encode)
-                .through(s2.writes)
+             }
+             .parJoin(100))
 
-
-            }
-            .parJoin(100)
         }
       }
       .compile

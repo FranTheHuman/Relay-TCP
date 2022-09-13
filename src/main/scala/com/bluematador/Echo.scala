@@ -5,7 +5,7 @@ import cats.effect.std.Console
 import com.bluematador.models.SocketAddressData
 import com.comcast.ip4s.SocketAddress
 import fs2.io.net.Network
-import fs2.text
+import fs2.{Chunk, text}
 import org.typelevel.log4cats.Logger
 
 trait Echo {
@@ -15,22 +15,32 @@ trait Echo {
 }
 
 object Echo extends Echo {
+
   override def boostrap[F[_] : Temporal : Console : Network : Logger](s: SocketAddressData): F[Unit] =
-    Network[F].client(SocketAddress(s.host, s.port)).use { socket =>
-      println(s"Connected to RelayServer on ${socket.remoteAddress}")
-      socket
-        .reads
+    fs2.Stream.resource(Network[F].client(SocketAddress(s.host, s.port))).flatMap { socket =>
+      println(s"Connected to RelayServer ... ")
+      socket.reads
         .through(text.utf8.decode)
-        .through(text.lines)
         .map(response => {
           println(s"ECHOOOO: $response")
           response
         })
         .through(text.utf8.encode)
         .through(socket.writes)
-        .handleErrorWith { e =>
-          println(s"ERROR: $e")
-          fs2.Stream.empty
-        }.compile.drain
-    }
+      //socket
+      //  .reads
+      //  .through(text.utf8.decode)
+      //  .through(text.lines)
+      //  .map(response => {
+      //    println(s"ECHOOOO: $response")
+      //    response
+      //  })
+      //  .through(text.utf8.encode)
+      //  .through(socket.writes)
+      //  .handleErrorWith { e =>
+      //    println(s"ERROR: $e")
+      //    fs2.Stream.empty
+      //  }.compile.drain
+    }.compile.drain
+
 }
