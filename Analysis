@@ -1,0 +1,66 @@
+-------------
+New Concepts:
+-------------
+
+Relay server program
+
+Typically refers to a small server that runs within an End-Customer’s DMZ in order to securely tunnel internet
+connections from within the firewalled environment out to the internet for a specific application or service.
+
+-----
+Goal:
+-----
+
+    retransmit TCP connections from a server that accepts connections to the server.
+
+-------------
+Requirements:
+-------------
+
+    - The relay server program will be contacted by two types of applications:
+        1. Programs needing a relay
+        2. Programs wanting to talk to the program needing a relay.
+
+    - Describe in clear terms to another programmer how they would enable a program they already have,
+        behind some firewall, to be able to use your relay server.
+        (Remember that every program in this scenario can contact the relay server,
+        but the relay server can't initiate communication with any other program)
+
+    Features:
+
+        - Alert the other programs when an incoming connection has been made
+        - Forward all incoming/outgoing traffic from the incoming connection to the other program and vice versa
+          (regardless of application protocol (so, this is a level lower than HTTP or SSL or something)
+        - Your relay server should work generally for any application level protocol,
+          for multiple concurrent clients, where each client may have its own multiple concurrent clients.
+
+    Help:
+        - Write a small application that uses the relay server  (maybe an echo server)
+
+        ( Once your server has established a successfully relayed port, it should output hat its new public address is,
+        and we should be able to contact it, through the relay, with existing programs like telnet or netcat or something.
+        Note that this requires your relay server interface to notify relayed clients of their public address.)
+
+------------
+How to test:
+------------
+
+- In order to test this, make sure that your relay program can be started on the command line
+
+```
+./relay port
+```
+
+(where port is the port the relay listens on, and how your echoserver will contact the relay)
+
+```
+./echoserver relayhost relayport
+```
+
+where relayhost is the host the relay is running on, and port is the port you provided to the relay program.
+
+So....
+
+1 - ./relay 8080 :  Relay will listen for services on 8080
+2 - run server {relayHost} {relayport} : Connect to the relay at localhost:8080
+3 - hit relay : the relay opened 8081 for programs wishing to reach the echoserver
