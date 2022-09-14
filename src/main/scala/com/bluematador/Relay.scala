@@ -4,110 +4,64 @@ import cats.effect.Async
 import cats.effect.std.Console
 import com.comcast.ip4s.{IpLiteralSyntax, Port}
 import fs2.io.net.{Network, Socket}
-import fs2.text
-import fs2.Stream
+import fs2.{Stream, text}
 
+/**
+ * Contract in charge of retransmitting connections between clients and servers to which it is impossible to connect
+ * @tparam F Effect in charge of containing the functionalities that allow achieving the desired behavior
+ */
 trait Relay[F[_]] {
 
+  /**
+   * Relay behavior
+   *
+   * @param port - Port on which it will be waiting for invisible systems to connect
+   * @return a connection between the client and the invisible system
+   */
   def relay(port: Int): F[Unit]
 
 }
 
 object Relay {
 
+  /**
+   * Relay behavior implementation through TCP protocol
+   */
   class RelayTcp[F[_] : Async : Network : Console] extends Relay[F] {
 
     override def relay(port: Int): F[Unit] =
-      (for {
-        socket1 <- Network[F].server(port = Port.fromInt(port))
-        _       <- Stream.eval(Console[F].println(s"Established relay address: localhost:8081"))
-        socket2 <- Network[F].server(port = Some(port"8081"))
-      } yield handleRelay(socket1, socket2)).handleErrorWith(t => {
-        println(t.toString)
-        fs2.Stream.empty
-      }).parJoin(100)
+      handleConnections(port)
+        .parJoin(100)
         .compile
         .drain
 
-    val handleRelay: (Socket[F], Socket[F]) => Stream[F, (Nothing, Nothing)] =
-      (socket1, socket2) => socket2
-        .reads
-        .through(text.utf8.decode)
-        .map(response => {
-          println(s"Emitting: $response")
-          response
-        })
-        .through(text.utf8.encode)
-        .through(socket1.writes)
-        .parZip(
+    private val handleConnections: Int => Stream[F, Stream[F, (Nothing, Nothing)]] =
+      port =>
+        (for {
+          socket1 <- Network[F].server(port = Port.fromInt(port)) // System to retransmit
+          _       <- Stream.eval(Console[F].println(s"Established relay address: localhost:8081"))
+          socket2 <- Network[F].server(port = Some(port"8081")) // Client
+        } yield handleRelay(socket1, socket2)) handleErrorWith { t =>
+          Stream.eval(Console[F].error(s"Error: $t")).drain
+        }
+
+    private val handleRelay: (Socket[F], Socket[F]) => Stream[F, (Nothing, Nothing)] =
+      (socket1, socket2) => {
+
+        lazy val inComing: Stream[F, Nothing] =
+          socket2
+            .reads
+            .through(socket1.writes)
+
+        lazy val outComing: Stream[F, Nothing] =
           socket1
             .reads
             .through(text.utf8.decode)
-            .map(response => {
-              println(s"Response: $response")
-              response
-            })
-            .handleErrorWith(t => {
-              println(t.toString)
-              fs2.Stream.empty
-            }).drain
-        )
-        .handleErrorWith(t => {
-          println(t.toString)
-          fs2.Stream.empty
-        })
+            .foreach(response => Console[F].println(s"$response"))
+            .drain
 
-    def relay_(port: Int): F[Unit] =
-      Network[F]
-        .server(port = Port.fromInt(port))
-        .flatMap {
-          s1 => {
-            println(s"Connected to External Client on ${s1.remoteAddress}")
-
-            Network[F]
-              .server(port = Some(port"8081"))
-              .map { s2 =>
-                println(s"Established relay address: localhost:8081")
-
-                s2
-                  .reads
-                  .through(text.utf8.decode)
-                  .map(response => {
-                    println(s"Emitting: $response")
-                    response
-                  })
-                  .through(text.utf8.encode)
-                  .through(s1.writes)
-                  .parZip(
-                    s1
-                      .reads
-                      .through(text.utf8.decode)
-                      .map(response => {
-                        println(s"Response: $response")
-                        response
-                      })
-                      .handleErrorWith(t => {
-                        println(t.toString)
-                        fs2.Stream.empty
-                      }).drain
-                  )
-                  .handleErrorWith(t => {
-                    println(t.toString)
-                    fs2.Stream.empty
-                  })
-
-
-              }
-              .parJoin(100)
-
-          }
-        }
-        .handleErrorWith(t => {
-          println(t.toString)
-          fs2.Stream.empty
-        })
-        .compile
-        .drain
+        inComing parZip outComing
+      }
 
   }
 

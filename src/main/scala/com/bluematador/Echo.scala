@@ -26,7 +26,7 @@ trait Echo[F[_]] {
 object Echo {
 
   /**
-   * Echo behavior implementation through an external relay server
+   * Echo behavior implementation through an external relay server with TCP protocol
    */
   class EchoTcp[F[_] : Async : Console : Network] extends Echo[F] {
 
