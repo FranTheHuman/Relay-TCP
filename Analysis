@@ -1,5 +1,5 @@
 -------------
-New Concepts:
+New Concept:
 -------------
 
 Relay server program
@@ -64,3 +64,13 @@ So....
 1 - ./relay 8080 :  Relay will listen for services on 8080
 2 - run server {relayHost} {relayport} : Connect to the relay at localhost:8080
 3 - hit relay : the relay opened 8081 for programs wishing to reach the echoserver
+
+-----
+TODO:
+-----
+
+    - Alert Programs needing a relay when a connection is established
+    - Fix the way the system and its tests run (more similar to the example)
+    - Try other types of TCP connections
+    - Add HTTP Connections (Programs needing a relay only ??? )
+    - Document code
