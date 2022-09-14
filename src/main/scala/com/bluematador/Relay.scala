@@ -39,7 +39,7 @@ object Relay {
       port =>
         (for {
           socket1    <- Network[F].server(port = Port.fromInt(port)) // System to retransmit
-          _          <- Stream.eval(Console[F].println(s"Established relay address: localhost:8081"))
+          _          <- Stream.eval(Console[F].println(s"Established relay address: localhost:8081<>"))
           socket2    <- Network[F].server(port = Some(port"8081")) // Client
           cliAddress <- Stream.eval(socket2.remoteAddress)
           _          <- Stream.eval(socket1.write(Chunk.array(s"New connection $cliAddress".getBytes))) // Notify new Client
