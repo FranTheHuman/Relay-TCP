@@ -69,8 +69,8 @@ So....
 TODO:
 -----
 
-    - Alert Programs needing a relay when a connection is established
     - Fix the way the system and its tests run (more similar to the example)
     - Try other types of TCP connections
     - Add HTTP Connections (Programs needing a relay only ??? )
     - Document code
+    - Integration Tests

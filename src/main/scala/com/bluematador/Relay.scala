@@ -4,7 +4,7 @@ import cats.effect.Async
 import cats.effect.std.Console
 import com.comcast.ip4s.{IpLiteralSyntax, Port}
 import fs2.io.net.{Network, Socket}
-import fs2.{Stream, text}
+import fs2.{Chunk, Stream, text}
 
 /**
  * Contract in charge of retransmitting connections between clients and servers to which it is impossible to connect
@@ -38,9 +38,11 @@ object Relay {
     private val handleConnections: Int => Stream[F, Stream[F, (Nothing, Nothing)]] =
       port =>
         (for {
-          socket1 <- Network[F].server(port = Port.fromInt(port)) // System to retransmit
-          _       <- Stream.eval(Console[F].println(s"Established relay address: localhost:8081"))
-          socket2 <- Network[F].server(port = Some(port"8081")) // Client
+          socket1    <- Network[F].server(port = Port.fromInt(port)) // System to retransmit
+          _          <- Stream.eval(Console[F].println(s"Established relay address: localhost:8081"))
+          socket2    <- Network[F].server(port = Some(port"8081")) // Client
+          cliAddress <- Stream.eval(socket2.remoteAddress)
+          _          <- Stream.eval(socket1.write(Chunk.array(s"New connection $cliAddress".getBytes))) // Notify new Client
         } yield handleRelay(socket1, socket2)) handleErrorWith { t =>
           Stream.eval(Console[F].error(s"Error: $t")).drain
         }
@@ -48,19 +50,19 @@ object Relay {
     private val handleRelay: (Socket[F], Socket[F]) => Stream[F, (Nothing, Nothing)] =
       (socket1, socket2) => {
 
-        lazy val inComing: Stream[F, Nothing] =
+        lazy val forwarding: Stream[F, Nothing] =
           socket2
             .reads
             .through(socket1.writes)
 
-        lazy val outComing: Stream[F, Nothing] =
+        lazy val response: Stream[F, Nothing] =
           socket1
             .reads
             .through(text.utf8.decode)
             .foreach(response => Console[F].println(s"$response"))
             .drain
 
-        inComing parZip outComing
+        forwarding parZip response
       }
 
   }

@@ -5,7 +5,7 @@ import cats.effect.kernel.Resource
 import cats.effect.std.Console
 import com.bluematador.models.SocketAddressData
 import com.comcast.ip4s.SocketAddress
-import fs2.Stream
+import fs2.{Stream, text}
 import fs2.io.net.{Network, Socket}
 
 /**
@@ -33,18 +33,36 @@ object Echo {
     override def echo(s: SocketAddressData): F[Unit] =
       Stream
         .resource(makeNetworkClient(s))
-        .flatMap(s => `read/write`(s))
+        .flatMap(s => `read&answer`(s))
         .compile
         .drain
 
     private def makeNetworkClient(s: SocketAddressData): Resource[F, Socket[F]] =
       Network[F].client(SocketAddress(s.host, s.port))
 
-    private def `read/write`(s: Socket[F]): Stream[F, Nothing] =
+    private def `read&answer`(socket: Socket[F]): Stream[F, Nothing] =
       Stream
         .eval(Console[F].println("Connected to RelayServer ..."))
-        .flatMap(_ => s.reads.through(s.writes))
+        .flatMap { _ =>
+          socket
+            .reads
+            .through(text.utf8.decode)
+            .flatMap { handleNotification(_, socket) }
+        }
 
+    private val handleNotification: (String, Socket[F]) => Stream[F, Nothing] =
+      (newMsg, socket) =>
+        newMsg match {
+          case s"New connection $address" =>
+            Stream
+              .eval(Console[F].println(s"New Client Connected at $address"))
+              .drain
+          case a =>
+            Stream
+              .eval(Async[F].pure(a))
+              .through(text.utf8.encode)
+              .through(socket.writes)
+      }
   }
 
 }
