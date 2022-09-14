@@ -14,7 +14,7 @@ object EchoServer extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     args match {
       case ::(head, next) if next.nonEmpty =>
-        Echo.boostrap[IO](
+        Echo.echo[IO](
           SocketAddressData(
             Hostname.fromString(head).getOrElse(host"localhost"),
             next.headOption.flatMap(p => Port.fromInt(p.toInt)).getOrElse(port"8080")
