@@ -13,7 +13,7 @@ object RelayServer extends IOApp {
       .fold(IO pure System.err.println(s"Usage: sbt 'run {port number}' ") as ExitCode.Error)(value =>
         Try { value.toInt } match {
           case Failure(_)    => IO pure System.err.println(s"Port argument must be a number!") as ExitCode.Error
-          case Success(port) => new RelayTcp[IO] relay port as ExitCode.Success
+          case Success(port) => new RelayTcp[IO] relay port map (_ => IO.never) as ExitCode.Success
         }
       )
 

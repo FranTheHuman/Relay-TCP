@@ -2,4 +2,11 @@ package com.bluematador.models
 
 import com.comcast.ip4s.{Hostname, IpLiteralSyntax, Port}
 
-case class SocketAddressData(host: Hostname = host"localhost", port: Port = port"8080")
+case class SocketAddressData(host: Hostname, port: Port)
+
+object SocketAddressData {
+
+  def empty: SocketAddressData =
+    SocketAddressData(host"localhost", port"8080")
+
+}

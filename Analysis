@@ -65,12 +65,13 @@ So....
 2 - run server {relayHost} {relayport} : Connect to the relay at localhost:8080
 3 - hit relay : the relay opened 8081 for programs wishing to reach the echoserver
 
+
+    - Test TCP connections -> nc -z -v localhost 8080
+
 -----
 TODO:
 -----
 
     - Fix the way the system and its tests run (more similar to the example)
-    - Try other types of TCP connections
     - Add HTTP Connections (Programs needing a relay only ??? )
     - Document code
-    - Integration Tests
