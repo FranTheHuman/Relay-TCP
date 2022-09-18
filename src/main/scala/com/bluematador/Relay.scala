@@ -1,6 +1,7 @@
 package com.bluematador
 
-import cats.effect.{Async, Concurrent, IO, Resource}
+
+import cats.effect.Async
 import cats.effect.std.Console
 import cats.implicits.catsSyntaxFlatMapOps
 import com.comcast.ip4s.{IpLiteralSyntax, Port}
@@ -27,7 +28,7 @@ trait Relay[F[_]] {
    * @param port - Port on which it will be waiting for invisible systems to connect
    * @return a connection between the client and the invisible system
    */
-  def relay(port: Int): F[Unit]
+  def relay(pp: PortsPool): F[Unit]
 
 }
 
@@ -38,45 +39,38 @@ object Relay {
    */
   class RelayTcp[F[_] : Async : Network : Console] extends Relay[F] {
 
-    override def relay(port: Int): F[Unit] =
-      handleConnections(port)
+    override def relay(pp: PortsPool): F[Unit] =
+      handleConnections(pp)
         .parJoin(100)
         .compile
         .drain
 
-    private val handleConnections: Int => Stream[F, Stream[F, (Nothing, Nothing)]] =
-      port =>
+    private val handleConnections: PortsPool => Stream[F, Stream[F, (Nothing, Nothing)]] =
+      pp =>
         (for {
-          socket1    <- Network[F].server(port = Port.fromInt(port)) // System to retransmit
-          _          <- Stream.eval(Console[F].println(s"Established relay address: localhost:8081"))
-          socket2    <- Network[F].server(port = Some(port"8081")) // Client - ExposeThroughTcp
-          //_          <- exposeThroughHttp(socket1)
+          socket1    <- Network[F].server(port = Port.fromInt(pp.currentPort)) // System to retransmit
+          nextPort    = pp.generateNext.currentPort // System to retransmit
+          _          <- Stream.eval(Console[F].println(s"Established relay address: localhost:${nextPort}"))
+          socket2    <- Network[F].server(port = Port.fromInt(nextPort)) // Client - ExposeThroughTcp
           cliAddress <- Stream.eval(socket2.remoteAddress)
           _          <- Stream.eval(socket1.write(Chunk.array(s"New connection $cliAddress".getBytes))) // Notify new Client
         } yield handleRelay(socket1, socket2)) handleErrorWith { t =>
           Stream.eval(Console[F].error(s"Error: $t")).drain
         }
 
-    private val handleRelay: (Socket[F], Socket[F]) => Stream[F, (Nothing, Nothing)] =
-      (socket1, socket2) => {
-
-        lazy val forwarding: Stream[F, Nothing] =
-          socket2
-            .reads
-            .through(socket1.writes)
-
-        lazy val response: Stream[F, Nothing] =
+    private def handleRelay(socket1: Socket[F], socket2: Socket[F]): Stream[F, (Nothing, Nothing)] =
+      socket2
+        .reads
+        .through(socket1.writes)
+        .parZip {
           socket1
             .reads
             .through(text.utf8.decode)
-            .parEvalMap(2)(response =>
+            .foreach(response =>
               socket2.write(Chunk.array(response.getBytes)) >>
-                Console[F].println(response)
+                Console[F].println("I receive a response")
             )
-            .drain
-
-        forwarding parZip response
-      }
+        }
 
   }
 
@@ -120,5 +114,6 @@ object Relay {
         case _ => NotFound("Not the path Bro")
       }
   }
+
 
 }

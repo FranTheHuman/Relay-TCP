@@ -1,5 +1,6 @@
 package com.bluematador
 
+import cats.Applicative
 import cats.effect.Async
 import cats.effect.kernel.Resource
 import cats.effect.std.Console
@@ -28,7 +29,7 @@ object Echo {
   /**
    * Echo behavior implementation through an external relay server with TCP protocol
    */
-  class EchoTcp[F[_] : Async : Console : Network] extends Echo[F] {
+  class EchoTcp[F[_] : Async : Applicative : Console : Network] extends Echo[F] {
 
     override def echo(s: SocketAddressData): F[Unit] =
       Stream
@@ -42,7 +43,8 @@ object Echo {
 
     private def `read&answer`(socket: Socket[F]): Stream[F, Nothing] =
       Stream
-        .eval(Console[F].println("Connected to RelayServer ..."))
+        .eval(socket.remoteAddress)
+        .evalMap(a => Console[F].println(s"Connected to relay on $a"))
         .flatMap { _ =>
           socket
             .reads

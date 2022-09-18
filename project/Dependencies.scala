@@ -9,6 +9,7 @@ object Dependencies {
     val pureconfig = "0.17.1"
     val cats       = "3.3.14"
     val http4s     = "0.23.15"
+    val akka = "2.6.20"
   }
 
   val circeCore         = "io.circe"              %% "circe-core"          % V.circe
@@ -26,6 +27,7 @@ object Dependencies {
   val circeLiteral      = "io.circe"              %% "circe-literal"       % V.circe
   val fs2Io             = "co.fs2"                %% "fs2-io"              % "3.2.14"
   val fs2Scodec         = "co.fs2"                %% "fs2-scodec"          % "3.2.14"
+  val akka              = "com.typesafe.akka"     %% "akka-actor"          % V.akka
 
   val dependencies: Seq[ModuleID] = Seq(
     circeCore,
@@ -42,6 +44,7 @@ object Dependencies {
     circeLiteral,
     fs2Io,
     fs2Scodec,
+    akka,
     logbackClassic % Runtime
   )
 

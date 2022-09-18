@@ -72,6 +72,7 @@ So....
 TODO:
 -----
 
-    - Fix the way the system and its tests run (more similar to the example)
-    - Add HTTP Connections (Programs needing a relay only ??? )
+    - Properly distribute messages with multiple client connections
     - Document code
+    - Add HTTP Connections (Programs needing a relay only ??? )
+    - Add Integration Tests

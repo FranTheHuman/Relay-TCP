@@ -10,7 +10,7 @@ object EchoServer extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     args match {
       case ::(head, next) if next.nonEmpty =>
-        new EchoTcp[IO].echo(makeSocketAddressData(head, next)) *> IO.never >> IO(ExitCode.Success)
+        new EchoTcp[IO].echo(makeSocketAddressData(head, next)) >> IO(ExitCode.Success)
 
       case _ =>
         IO
