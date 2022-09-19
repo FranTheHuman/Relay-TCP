@@ -1,0 +1,14 @@
+How To Run The Echo Example:
+
+0. Being in a terminal on the root of the project
+
+    1. First, Start the Relay Server
+        - sh ./relay.sh ${port}
+
+    2. Second, raise the echo server
+        - sh ./echoserver ${relay_host} ${relay_port}
+
+        (A second TCP channel is going to be exposed on a different port than the previous one where)
+
+    3. Third, connect to the echoserver through the relay server with telnet
+        - telnet ${relay_host} ${relay_port}
