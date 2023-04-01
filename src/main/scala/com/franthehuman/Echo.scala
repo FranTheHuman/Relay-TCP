@@ -1,10 +1,10 @@
-package com.bluematador
+package com.franthehuman
 
 import cats.Applicative
 import cats.effect.Async
 import cats.effect.kernel.Resource
 import cats.effect.std.Console
-import com.bluematador.models.SocketAddressData
+import com.franthehuman.models.SocketAddressData
 import com.comcast.ip4s.SocketAddress
 import fs2.{Stream, text}
 import fs2.io.net.{Network, Socket}

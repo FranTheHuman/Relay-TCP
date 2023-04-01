@@ -1,8 +1,8 @@
-package com.bluematador
+package com.franthehuman
 
 import cats.effect.{ExitCode, IO, IOApp}
-import com.bluematador.PortsPool.PortsPoolImpl
-import com.bluematador.Relay.RelayTcp
+import com.franthehuman.PortsPool.PortsPoolImpl
+import com.franthehuman.Relay.RelayTcp
 
 import scala.util.{Failure, Success, Try}
 

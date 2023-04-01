@@ -1,4 +1,4 @@
-package com.bluematador.models
+package com.franthehuman.models
 
 import com.comcast.ip4s.{Hostname, IpLiteralSyntax, Port}
 

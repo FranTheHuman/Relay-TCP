@@ -1,4 +1,4 @@
-package com.bluematador
+package com.franthehuman
 
 
 import cats.effect.Async

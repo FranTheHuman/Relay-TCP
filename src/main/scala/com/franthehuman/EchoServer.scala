@@ -1,8 +1,8 @@
-package com.bluematador
+package com.franthehuman
 
 import cats.effect._
-import com.bluematador.Echo.EchoTcp
-import com.bluematador.models.SocketAddressData
+import com.franthehuman.Echo.EchoTcp
+import com.franthehuman.models.SocketAddressData
 import com.comcast.ip4s.{Hostname, Port}
 
 object EchoServer extends IOApp {
